@@ -1,0 +1,162 @@
+---
+title: "Advanced Solidity Topics"
+description: "Events, libraries, and address interaction in Solidity"
+---
+
+# Advanced Solidity Topics
+
+## Exception Handling
+
+### Require
+
+```solidity
+function testRequire(uint i) public pure {
+    require(i <= 10, "i > 10"); // check values before
+}
+```
+
+### Revert
+
+A contract can revert a call, negating all state changes. No state changes occur, no value is transferred, but gas is spent.
+
+```solidity
+contract X {
+    address owner = msg.sender;
+    error Unauthorized(); // gas saving
+    
+    function adminOnly() external {
+        if (!admin(msg.sender)) {
+            revert Unauthorized();
+        }
+    }
+    
+    function ownerOnly() {
+        require(msg.sender == owner, "only owner!");
+    }
+    
+    function withdraw() external {
+        uint balance = getBalance(msg.sender);
+        sendBalance(msg.sender);
+        assert(getBalance(msg.sender) == 0); // expect no remaining balance
+    }
+}
+```
+
+### Custom Errors
+
+Customize error types with revert:
+
+```solidity
+contract Error {
+    error MyError(address caller, uint i);
+    
+    function testCustom(uint i) public view {
+        if (i > 10) {
+            revert MyError(msg.sender, i);
+        }
+    }
+}
+```
+
+### Try/Catch
+
+```solidity
+try recipient.send(amount) {
+    // send success
+} catch {
+    // send failed
+}
+
+function divide(uint numerator, uint denominator) external {
+    try this.safeDivide(numerator, denominator) returns (uint quotient) {
+        result = quotient;
+    } catch Error(string memory /*reason*/) {
+        // handle revert() and require()
+        result = 11;
+    } catch (bytes memory /*lowLevelData*/) {
+        // handle custom error and others
+        result = 22;
+    }
+}
+```
+
+## Data Locations
+
+1. **Storage**: State variables, stored in persistent storage on the blockchain
+2. **Memory**: Read-only, can modify but not saved; disappears when the function completes
+3. **Calldata**: Read-only data location used for function arguments; immutable and cheaper than storage
+
+```solidity
+contract SimpleStorage {
+    string public text;
+    
+    // calldata 89000 gas
+    // memory 90000 gas
+    function set(string calldata _text) external {
+        text = _text;
+    }
+    
+    function get() external view returns (string memory) {
+        return text;
+    }
+}
+```
+
+## Address Interaction
+
+### Message Calls
+
+Message calls send value and calldata to contracts:
+- First message call begins the transaction (EOA → contract)
+- Subsequent calls are part of the same transaction (contract → contract)
+- The transaction and state changes only complete when the initial function call finishes
+
+Global variables:
+- `msg.sender`
+- `msg.value` - amount in wei
+- `msg.data` - calldata
+- `msg.sig` - function identifier
+
+```solidity
+contract X {
+    address deployer;
+    address otherContract;
+    
+    constructor(address _otherContract) payable {
+        deployer = msg.sender;
+        otherContract = _otherContract;
+        (bool success, ) = _otherContract.call{value: msg.value}("");
+        require(success); // fail/revert the transaction
+    }
+}
+
+contract Y {
+    address mostRecentPayer;
+    
+    receive() external payable {}
+    
+    function withdraw() external {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+}
+```
+
+### Low-Level Calls
+
+```solidity
+function storeSum(address b) external {
+    sum = b.add(5, 10);
+}
+
+// Low-level call
+function storeSum(address b) external {
+    (bool success, bytes memory returnData) = 
+        b.call(abi.encodeWithSignature("add(uint256,uint256)", 5, 10));
+    sum = abi.decode(returnData, (uint));
+    require(success);
+}
+
+interface B {
+    function add(uint, uint) external returns(uint);
+}
+```

@@ -1,0 +1,610 @@
+# Basics
+
+## Concepts
+
+- Solidity is a Turning complete language . gets compiled to bytecode that Ethereum virtual machine executes
+- Only used to compile contracts to byteCode
+- Source code    — >  Bytecode  → EVM node →net
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/b678ef39-97b4-4935-81c3-0f2f49d0430b/image.png)
+
+## Data
+
+### values and references
+
+1. value types
+
+```solidity
+uint = uint256  0 to 2**256-1
+			 uint8    0 to 2**8-1
+		   uint16   0 to 2**16-1
+int = int256  -2**255 -1
+			int128  -2**128-1
+int public minInt = type(int).min
+int public maxInt = type(int).max
+address public addr = 0x1234o15132afpajvz;
+bytes32 public b32 = 0x12vosidvjal;
+
+```
+
+### Reference Types
+
+- As an **argument** , Must declare the memory location : **Calldata** , **memory** , or **storage**
+- Potentially , passed by reference
+- Arrays : can be fixed or not
+
+```solidity
+contract array{
+	uint[] public nums = [1,2,3];
+	uint[3] pulbic numsFixed =[4,5,6];
+	function examples () external {
+		nums.push(4);    // 1,2,3,4
+		delete nums[1];  //	1,0,3,4
+		nums.pop();
+
+		// create array in memory
+		uint[] memory  a = new uint[] (5);
+		a[1] = 123;
+	}
+}
+```
+
+- Map
+    - storage only
+    - cannot be passed as an argument
+    - Mapping nested in structs **cannot be constructed , assign fields first**
+    - Underlaying use SSstore and SLoad with base slot 0x0
+    
+    ```solidity
+    contract Mapping {
+    	mapping(address => uint) public balances;
+    	mapping(address => mapping(address => bool)) public isFriend;
+    	function examples()external {
+    	balances[msg.sender]=123;
+    	uint bal = balances[msg.sender];
+    	uint bal2 = balances[address(1)]; // default value 0
+    	delete balances[msg.sender]; // 0 in this balances
+    	
+    	
+    	//nested
+    	Proposal storage proposal = proposals.push();
+    	proposal.data = xxx;
+    ```
+    
+- Struct and Enum
+    
+    ```solidity
+    struct Car{
+    	string model;
+    	uint year;
+    	address owner;
+    	}
+    	Car public car;
+    	Car[] public cars;
+    
+    function examples() external {
+    	Car memory toyota = Car("Toyota",1990,msg.sender);
+    	Car memory lambo = Car({year:1990,model:"Lamborghini",owner: msg.sender});
+    	Car storage _car = cars[0];
+    	_car.year = 2024;
+    }
+    enum Status{
+    	None,  //0
+    	Pending, //1
+    	Shipped,  //2
+    	...
+    }
+    ```
+    
+- String
+    - for string is less than 32 bytes , it’s more efficient to store it in a fixed-size bytes32
+- Bytes
+
+### Variables
+
+1. **State** variables (**Storage** Variables ) : saved on blockchain
+    1. Solad : read from storage location 
+    2. SStore : store to some storage location
+    
+    ```solidity
+    contract Example{
+    	uint a  = 100; // storage slog -0x0
+    	uint b = 200  ; // 0x1
+    	bool c = true ; // 0x2  
+    	constructor(){
+    	uint x;
+    	assembly{
+    		x := sload(0x0);
+    	}
+    }
+    ```
+    
+2. **Local** variables : only in local functions
+3. **Global** variables
+4. **Memory : only exist when got called** 
+5. **immutable : value can’t be change , save gas**
+
+```jsx
+contract StateVariables
+{
+	uint public myUnit = 123 ; //state variables
+	function foo()external {
+
+			unit x = 123 ; //local
+			address sender = msg.sender //global
+			uint timestamp = block.timestamp;
+			uint blockNum = block.number;
+	}
+```
+
+1. Default values
+    - bool : false
+    - uint and int : 0
+    - address : 0x000000
+    - bytes32 : 0x00000000000
+    - 1 wei = 1
+    - 1 ether  = 1e18
+    - 1 gwei = 1e8
+2. constant : key word for constant values  , gas is less
+
+## Functions
+
+- 显示声明返回值
+- Access level
+    - private : in this contract
+    - internal : in this contract with inheritance
+    - public : inside and outside this contract
+    - external : Only outside this contract
+- attributes
+    - payable : send me some ether (API)
+    - pure : read-only  , can’t read/write data from block-chain(storage)  → 完全独立的函数
+    - view : read-only , can read data from block-chain
+
+```solidity
+function add(uint x,uint y )external pure returns (uint)
+  {
+    return x+y;
+  }
+function example() internal view {  }
+```
+
+### Function Modifier
+
+- For function wrap , can take input
+- No ***constructors***
+
+```solidity
+modifier whenNotPaused(){
+	require(!pasued,"pasued");
+	_;
+}
+function inc() external whenNotPaused{
+	count += 1;
+}
+function dec() external whenNotPaused{
+	count -= 1;
+}
+modifier cap(uint i){  ..code}
+function incBy(uint x) external whenNotPaused cap(x)
+{  // code }
+```
+
+- sandwich in mid
+
+```solidity
+modifier sandwich(){
+	count += 10;
+	 _;
+	count *=2;
+}
+```
+
+### Special function
+
+- **Constructor** : only called once when we deploy the contract
+
+```solidity
+contract ConstructerTest {
+	address public owner;
+	uint public x;
+	constructor(uint _x)
+	{
+		owner = msg.sender;
+		x = _x;
+	}
+	receive() external payable{
+	}
+    fallback() external {
+      // do somethin'
+  }
+}
+```
+
+- **Receive** :  when a contract is sent ether without any **calldata**, or when the calldata does not match a function signature on the contract.
+    - 默认接受函数
+    - A receive function has no name, takes no parameters, and returns nothing. It must be marked as **external** and **payable**.
+    
+    ```solidity
+    receive() external payable { }
+    ```
+    
+- **Fallback**
+    - When will be Executed
+        - caller tries to call a function doesn’t exist
+        - Ether is send , receive function doesn’t exist
+        - Ether is sent , receive function exists, [msg.data](http://msg.data) is not empty
+    - No para ,  Must Be External
+        
+        
+        ```solidity
+        fallback() external{}
+        ```
+        
+
+- SelfDestruct
+    - When Contract lacks Receive and fallback function , it cannot receive Ether
+    
+    ```solidity
+    function anyoneCanDestroy () public {
+      //receiver needs to be address payable
+      selfdestruct(receiver);
+    }
+    ```
+    
+
+### Function Selector
+
+- All *function calls* are identified by function selectors in Solidity.
+- First 4 bytes of the hash of a function signature
+- How to call
+    - Manually calculate
+    - Function.selector
+    
+    ```solidity
+    function myFunction(address a, uint b, bytes c) public {...}
+    
+    bytes4 selector = bytes4(keccak256("myFunction(address,uint256,bytes)"));
+    bytes4 selector = myFunction.selector;
+    ```
+    
+
+### Outputs
+
+- assigned way for output saves more gas
+
+```solidity
+function returnMany() public pure returns (uint,bool){
+	return (1,true);
+}
+function named() public pure returns (uint x, bool b){
+	return (1,true);
+}
+function assigned() public pure returns(uint x, bool b){
+	x = 1;
+	b = true;
+}
+function destruct() public pure {
+	(uint x , bool b) = returnMany();
+	(,bool b) = returnMany();
+}
+```
+
+## Exception Handling
+
+### Require
+
+- require(bool, error message)
+
+```solidity
+	function testRequire(uint i) public pure{
+		require(i<=10,"i>10");     // check values before 
+	}
+```
+
+### Revert
+
+- A contract can Revert a call , negating all state changes
+- No state changes , No value is transferred , **gas is spent**
+- **Require  , Revert , Assert**
+
+```solidity
+contract X {
+	address owner = msg.sender;
+	error Unauthorized();  // gas saving
+	function admainOnly() external{
+		if(!admin(msg.sender)) {
+			revert(Unauthorized);
+		}
+	function ownerOnly(){
+		require(msg.sender = owner, "only owner!")
+	}
+	function withdraw() external {
+		uint balance = getBalance(msg.sender);
+		sendBalance(msg.sender);
+		assert(getBalance(msg.sender) == 0);   // expect no remaining balance
+	}
+	
+    function withdraw() public 
+  {
+      require(msg.sender == owner);
+      payable(msg.sender).transfer(address(this).balance);
+  }
+```
+
+### Error
+
+- Customize Error types with revert
+
+```solidity
+contract Error{
+  error MyError(address caller, uint i);
+	function testCustom(uint i) public view{
+		if(i>10) {
+				revert MyError(msg.sender, i);
+			}
+	}
+
+}
+```
+
+### Try Catch
+
+```solidity
+try recipient.send(amount) {
+  //send success
+} catch {
+  //send failed
+}
+
+function divide(uint numerator, uint denominator) external {
+  try this.safeDivide(numerator, denominator) returns (uint quotient) {
+    result = quotient;
+  } catch Error(string memory /*reason*/) {
+    //  handle revert() and require()
+    result = 11;
+  } catch (bytes memory /*lowLevelData*/) {
+    // handle custome error and others
+    result = 22;
+  }
+}
+```
+
+## Deploy
+
+- can deploy any contract by its address
+    
+    ```solidity
+    contract Proxy{
+    	event Depoly(address);
+    	function depoly(bytes memory code) external payable returns (address){
+    		assembly{
+    			//create(v,p,n)
+    			//V = amount of ETH to send
+    			//p = poiner in memory of the start code
+    			//n = size of code
+    			addr : = create(callvalue(),add(code,0x20),mload(code));
+    		}
+    	}
+    	function execute(address target, bytes memory data) external payable{
+    	(bool success,) = target.call{value:msg.value}(data);
+    	require(sucess,"failed");
+    }
+    ```
+    
+
+## Data location
+
+1. Storage : state variable , stored in **persistent** storage in the blockchains.
+2. Memory : read only , can modify but not saved
+    - disappear when the function has completed running.
+    - for array variable , only initialized with fixed size
+3. Calldata : 
+    - Read-only data location is used for function arguments.
+    - Immutable data location.
+    - Cheaper than storage
+
+```solidity
+contract SimpleStorage{
+	string public text;
+	// calldata 89000gas
+	// memory    90000gas
+	function set(string calldata _text) external{
+		text = _text;
+	}
+	function get() external view returns (string memory){
+		return text;
+	}
+	
+```
+
+1. Compiler behavior
+    - state variables are always in storage
+    - function arguments are always in memory
+    - local variables of struct, array or mapping type reference storage by default
+    - local variables of value type (i.e. neither array, nor struct nor mapping) are stored in the stack
+
+## Event
+
+```solidity
+event Log(string message, uint val);
+event IndexedLog(address indexed sender, uint val);
+function example()external {
+	emit Log("foo",1234);
+	emit IndexedLog(msg.sender,789);
+}
+```
+
+## Inheritance
+
+- Key word : **virtual** and **is**
+- Child contracts inherit functions (Except **private**) and state variables
+- multiple inheritances
+    - sequence **matters** : most **based** in front
+
+```solidity
+contract A{
+	function foo() public pure virtual returns (string){
+		return "A";
+	}
+}
+contract B is A {
+	function foo() public pure override returns (string){
+		return "B";
+		}
+}
+contract C is A, B {
+	function foo() public pure override(A,B) returns (string){
+		return "C";
+	}	
+}
+```
+
+- Call parent constructor
+    
+    ```solidity
+    //1  call when inital
+    contract U is S("s") , T("t")  {}
+    //2 pass paramenter
+    contract V is S,T {
+    	constructor(string memory _name, string memory _text ) S (_name) T(_text){
+    	}
+    }
+    ```
+    
+    - order of execution only depend s on **define sequence (S ,T )** , not the sequence we call
+- Call parent function
+    - direct or super
+    
+    ```solidity
+    contract A{
+    	function foo() public pure virtual returns (string){
+    		return "A";
+    	}
+    }
+    contract B is A {
+    	function foo() public pure override returns (string){
+    		 A.foo();   // direct call
+    		 super.foo() // super keyword
+    		}
+    }
+    ```
+    
+
+## Interface
+
+1. Must be external
+2. No variables
+
+```solidity
+//define an interface named MyInterface with an interface function myFunction.
+interface MyInterface {
+  function myFunction(uint256 x) external returns (uint256);
+}
+```
+
+### Abstract Contract
+
+- It defines **functions**, **variables**, and common *functionalities*.
+- *Abstract contracts* can have **variables** and **implementations**, while *interfaces* only have **function signatures**.
+
+```solidity
+//defined an abstract contract named ContractA.
+abstract contract ContractA { }
+```
+
+# Address interaction
+
+## Message call
+
+- send value and *calldata* to contract
+- First message call is beginning of the transaction(EOA → contact)
+- Each subsequent message call is part of same transaction (contact → contract)
+- The transaction and any state change only complete when initial function call finishes execution
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/a8c2332f-1718-4439-b550-d44cf2646872/image.png)
+
+- Global variables
+    - msg.sender
+    - msg.value - amount in wei
+    - [msg.data](http://msg.data) - calldata
+    - msg.sig - function identifier
+- How Do EOAs and contracts call other contracts  : Address (20 bytes long)
+    
+    ```solidity
+    contract X{
+    	address delployer;
+    	address otherContract;
+    	constructor(address _otherContract) payable
+    	{
+    		deployer = msg.sender;
+    		otherContract = _otherContratc;
+    		(bool sucess, ) = _otherContract.call{ value:msg.value} ("");
+    		require(sucess);   // fail/revert the transaction 
+    	}
+    }
+    contract Y{
+    	address mostRecentPayer;
+    	receive() external payable{
+    	}
+    	payable(msg.sender).transfer(address(this).balance);
+    }
+    ```
+    
+- Only *payable methods can receive ether*
+    - .call syntax is .call{gas , value} (calldata)
+
+## CallData(how to target functions)
+
+- Low Level call :
+    - encodeWithSignature : get first 4 bytes of the keccak256 of add method
+
+```solidity
+function storeSum(address b ) external {
+	sum = b.add(5,10);
+}
+function storeSum(B b ) external {
+	sum = b.add(5,10);	
+}
+//low level call
+function storeSum(address b) external {
+	bool success , bytes memory returnData) = 
+		b.call(abi.encodeWithSignature("add(uint256,uint256)",5,10));
+	sum = abi.decode(returnData,(uin));
+	require(sucess);
+}
+interface B{
+	function add(uint, uint) external returns(uint);
+	} 
+```
+
+- make sure contract responds to the calldata
+- fallback : 当cal contract address为空时 默认的function
+
+## Escrow
+
+![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/5559d060-3e79-4940-9b77-db1f086ac57d/image.png)
+
+- Arbiter approve transaction
+
+# Lib-Define
+
+- Lib do not have its own state vars
+- The using...for... statement can be used to attach *functions* from a *library* to a specific *type*.
+
+```solidity
+//Defining functions and strucrs in Library is exactly the same as in contract.
+library StudentLibrary {
+  struct Student{
+    string name;
+    uint id;
+    uint grade;
+  }
+
+  function compareGrades(Student S1, Student S2) returns(Student){
+    //function body
+  }
+}
+using MathLibrary for uint256;
+uint a;
+a.add(b);
+```

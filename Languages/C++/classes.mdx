@@ -1,0 +1,131 @@
+---
+title: "Classes"
+description: "Understanding C++ classes, inheritance, and polymorphism"
+---
+
+# C++ Classes
+
+## Basic Concepts
+
+### Core Features
+C++ classes support three fundamental object-oriented programming concepts:
+1. **Encapsulation**: Bundling data and methods together
+2. **Inheritance**: Creating new classes based on existing ones
+3. **Polymorphism**: Objects of different types can be treated uniformly
+
+### Access Control
+- **private**: Members are completely private and accessible only within the class
+- **protected**: Members are accessible within the class and derived classes (but not from outside)
+- **public**: Members are accessible from anywhere
+
+The key difference between protected and private is that derived classes can access protected members, while private members are completely inaccessible to derived classes.
+
+### The `this` Pointer
+- Used to point to the object that invokes a member function
+- `*this` refers to the entire object
+
+### Constants in Classes
+Classes cannot directly define constants because classes are just declarations, not object creation. Instead:
+
+#### Enumerations
+Enumerations create symbolic names without storing values in objects:
+
+```cpp
+class Bakery
+{
+    enum {months = 12};
+    double costs[months];
+};
+
+// Handling enumeration conflicts
+enum egg {small};
+enum shirt {small};  
+
+// C++11 scoped enumerations
+enum class egg {small};
+enum class shirt {small};
+```
+
+#### Static Members
+Static variables are shared among all instances and stored with other static variables.
+
+## Member Functions
+
+### Default Member Functions
+C++ automatically generates several special member functions:
+
+1. **Constructor**: Initializes objects
+2. **Destructor**: Cleans up resources when objects are destroyed
+3. **Copy Constructor**: Creates objects from existing objects
+4. **Move Constructor**: Transfers resources from temporary objects
+5. **Assignment Operator**: Assigns one object to another
+6. **Address-of Operator**: Returns object's address (const version)
+7. **Move Assignment Operator**: Transfers resources during assignment
+
+### Special Member Functions
+
+#### Conversion Functions
+Conversion functions allow classes to be converted to other types:
+
+```cpp
+operator int();
+operator double();
+
+Class::operator int() const
+{
+    return int(pounds + 0.4);
+}
+// Usage: int a = class_object;
+```
+
+**Important Rules for Conversion Functions**:
+1. Must be class methods
+2. Cannot specify return type
+3. Cannot have parameters
+
+## Inheritance
+
+### Access Specifiers in Inheritance
+- **protected**: Derived classes can access protected members, private members remain completely private
+- **Relationship**: Derived classes can use base class methods (public) and base pointers can point to derived objects: `Base *x = y`
+
+### Pointer and Reference Compatibility
+1. **Upcasting**: Converting derived class pointers to base class pointers → Implicit conversion allowed
+2. **Downcasting**: Converting base class pointers to derived class pointers → Implicit conversion not allowed
+
+### Inheritance Access Table
+
+| Base Class Member | public Inheritance | protected Inheritance | private Inheritance |
+| --- | --- | --- | --- |
+| public member | public | protected | private |
+| protected member | protected | protected | private |
+| private member | Accessible only through base class interface | Accessible only through base class interface | Accessible only through base class interface |
+
+## Polymorphism
+
+### Types of Polymorphism
+1. **Compile-time Polymorphism (Static)**: Implemented through function overloading (early binding)
+2. **Runtime Polymorphism (Dynamic)**: Implemented through virtual functions (late binding)
+   - Virtual tables are unique to each class but shared among objects
+
+## Friend Functions and Classes
+
+Friend functions provide another way to access private members. The prototype is placed in the class declaration, but the definition doesn't require class scope resolution.
+
+```cpp
+friend Time operator*(double m, const Time &t);
+{
+    t.hours += ...;  // Explicitly accessing private members
+}
+
+// Note: return ostream
+ostream& operator<<(ostream& os, const Time& obj) 
+{
+    os << ...;
+    return os;
+}
+```
+
+### Friend Classes
+- Methods of a friend class can access private and protected members of the original class
+- Specific friend class functions can also be defined

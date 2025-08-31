@@ -1,0 +1,66 @@
+---
+title: "Keywords"
+description: "Understanding C++ keywords and their usage"
+---
+
+# C++ Keywords
+
+## Storage Class Specifiers
+
+### volatile
+Declaring objects in **shared memory** that can be accessed by multiple processes. The compiler **reloads the value from memory** each time it is accessed by the program.
+
+### const
+Specifies that the object or variable isn't modifiable.
+
+### constexpr (C++11)
+It is possible to evaluate the value of the function or variable at compile time.
+
+### extern
+External linkage
+
+### static
+Internal linkage
+
+### thread_local
+Specifier is accessible only on the thread on which it's created.
+
+```cpp
+struct S // cannot be applied to type definition
+{
+    thread_local int i; // Illegal. The member must be static.
+    thread_local static char buf[10]; // OK
+};
+```
+
+## Type Deduction and Storage
+
+### auto
+Before it declares a variable in automatic storage class local lifetime. Now it declares a variable whose type is deduced from initialization expression.
+
+### register
+Register variable, requests the compiler to store this variable in the CPU register to speed up program execution (no longer supported).
+
+## Function Calling Conventions
+
+### __fastcall
+Calling convention specifies that arguments to functions are to be passed in registers, only applies to the x86 architecture.
+
+```cpp
+struct CMyClass {
+   void __fastcall mymethod();
+};
+// equivalent
+void CMyClass::mymethod() { return; }
+void __fastcall CMyClass::mymethod() { return; }
+```
+
+## Increment Operators
+
+### a++ and ++a
+
+```cpp
+a = 1
+b = a++  //b=1
+c = ++a  //c = 2 
+```

@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Alex personal docs",
+  "name": "Alex's doc",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -11,38 +11,36 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Overview",
         "groups": [
           {
             "group": "Getting started",
             "pages": [
               "index"
             ]
-          },
-          {
-            "group": "Languages",
-            "pages": [
-              "Languages/Solidity"
-            ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab" : "Languages",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Solidity",
             "pages": [
-              "api-reference/introduction"
+              "Languages/Solidity/index",
+              "Languages/Solidity/basics",
+              "Languages/Solidity/functions",
+              "Languages/Solidity/contracts",
+              "Languages/Solidity/advanced"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "C++",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "Languages/C++/basics",
+              "Languages/C++/keywords",
+              "Languages/C++/classes",
+              "Languages/C++/stl"
             ]
           }
         ]
@@ -57,10 +55,6 @@
         }
       ]
     }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
   },
   "navbar": {
     "primary": {
@@ -83,9 +77,12 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/Alexyannnn",
+      "github": "https://github.com/Alex-wuhu",
+      "linkedin": "https://www.linkedin.com/in/yang-alex-91b382247/"
     }
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
   }
 }

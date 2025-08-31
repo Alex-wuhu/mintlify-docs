@@ -1,0 +1,92 @@
+### Basic concepts
+
+1. 特性：封装，继承和多态
+2. 访问控制：
+    - private 和protected 的唯一区别的派生类可以访问保护对象，private则完全私有
+3. This ：用于指向调用成员函数的对象，引用整个对象则使用*this
+4. 类中定义常量：类中不能定义常量const ,因为类只是声明了对象的形式 而不是创建
+    - 为此  声明枚举 ：对象并不包含枚举只是创建符号名称
+    
+    ```cpp
+    class Bakery
+    {
+    	Enum{months =12};
+    	double costs[month];
+    }
+    // 枚举冲突处理
+    Enum egg{small};
+    Enum shirt{small};  
+    //c++ 定义新的枚举
+    Enum class egg
+    Enum class shirt
+    ```
+    
+    - static :该变量于其他静态变量储存在一起共用
+
+### 成员函数
+
+1. 默认成员函数 
+    1. 构造函数
+    2. 析构函数
+    3. 复制构造函数
+    4. 移动构造函数
+    5. 赋值运算符
+    6. 取地址运算符(const修饰的)
+    7. 移动赋值操作符
+2. 特殊成员函数
+    1. 转换函数：例将类转换为int/double
+    2. attention:
+        1. 转换函数必须是类方法
+        2. 转换函数不能指定返回类型
+        3. 转换函数不能有参数
+    3. 
+    
+    ```cpp
+    Operator int();
+    Operator double();
+    Class::operator int()const
+    {
+    	Return int (pounds+0.4);
+    }
+    So we can say, int a=class(object)
+    ```
+    
+3. 继承
+    - protected: 派生类可以访问保护对象，private完全私有
+    - 关系
+        - 可以使用基类方法（public）
+        - base可以指向derived : Base *x = y
+    - 指针和引用类型的兼容
+        1. upcasting：派生类指针转换为基类指针 -->可以隐性转换
+        2. Downcasting:基类指针转换为派生类指针 -->无法隐性转换
+    - table
+    
+    |  | public | protect | private |
+    | --- | --- | --- | --- |
+    | public member | public | protected | private |
+    | protected member | protected | protected | private |
+    | private member | 只能通过基类接口访问 | 只能通过基类接口访问 | 只能通过基类接口访问 |
+4. 多态（polymorphism）:
+    1. 编译时多态性（静态多态）：通过重载函数实现：early binding
+    2. 运行时多态性（动态多态）：通过虚函数实现 ： late binding
+        - virtual table类独有，对象共用
+5. 友元：访问私有部分的另一方法，原型放入类声明中,定义时无需加上类解析符
+    
+    ```cpp
+    Friend Time operator*(double m,const Time &t);
+    		{
+    			T.hours+=,,,,      .显式访问了私有成员
+    }
+    
+    // 注意return ostream
+    			Ostream& operator<<(ostream& os, const & obj) 
+    			{
+    				Os<< ……;
+    				Return os;
+    			}
+    ```
+    
+    - friend class
+        - 友元类的方法可以访问原始类的私有和保护成员，也可以定义特定的友元类函数
+
+[String](https://www.notion.so/String-155dd14fc79181f9905dc30473f1e865?pvs=21)

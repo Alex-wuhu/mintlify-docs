@@ -1,0 +1,171 @@
+---
+title: "STL"
+description: "Standard Template Library components and containers"
+---
+
+# C++ Standard Template Library (STL)
+
+The Standard Template Library (STL) is a powerful set of C++ template classes that provide common programming data structures and functions.
+
+## Six Core Components
+
+### 1. Containers
+Various data structures implemented as class templates:
+- Sequential containers: array, vector, list, deque
+- Associative containers: set, map, multiset, multimap
+- Unordered containers: unordered_set, unordered_map, etc.
+
+### 2. Algorithms
+Function templates that implement common operations like sorting, searching, and modifying sequences.
+
+### 3. Iterators
+The "glue" between containers and algorithms. They are "generic pointers" - class templates that overload operators like `*`, `->`, `++`.
+
+### 4. Functors (Function Objects)
+Class templates that act as algorithms' policies by overloading the function call operator `()`.
+
+### 5. Adapters
+Modify interfaces of containers or functions. Examples include stack, queue, and function adapters.
+
+### 6. Allocators
+Class templates responsible for memory management and allocation.
+
+## Sequential Containers
+
+### array
+Static array that cannot dynamically grow in size.
+
+### vector
+Dynamic array that can grow and shrink as needed.
+- **Iterators**: Random access iterators since elements are stored in contiguous memory
+- **Data Structure**: Linear contiguous space with `start`, `finish`, and `end_of_storage` iterators
+
+```cpp
+iterator start;
+iterator finish;
+iterator end_of_storage;
+```
+
+#### Construction and Memory Management
+- `push_back()`: Checks for available space and extends if necessary
+- **Important**: Dynamic resizing allocates new space and moves all elements, making existing iterators invalid
+
+#### Element Removal
+```cpp
+void pop_back()
+{
+    --finish;
+    destroy(finish);
+}
+```
+
+#### reserve vs resize
+- `reserve()`: Affects container capacity only
+  - Expands to a predetermined size to reduce multiple allocations
+  - Only guarantees minimum capacity
+- `resize()`: Affects both size and capacity
+  - Changes the effective size and can set default values
+  - May have multiple parameters
+
+#### Iterator Invalidation
+- Insertion may cause reallocation, invalidating all iterators
+- Deletion invalidates the specific iterator; `erase()` returns the next valid iterator
+- Solution: `it = vec.erase(it);`
+
+#### Memory Release Methods
+- `vec.clear()`: Clears content but doesn't release memory
+- `vector<T>().swap(vec)`: Clears content and releases memory
+- `vec.shrink_to_fit()`: Requests capacity reduction to match size
+- Combined approach: `vec.clear(); vec.shrink_to_fit();`
+
+### list
+Doubly-linked list where each insertion/deletion allocates/deallocates a single node.
+- **Implementation**: Circular doubly-linked list with `prev` and `next` pointers
+- **Use Case**: Ideal for frequent insertions and deletions
+
+### deque
+Double-ended queue with bidirectional access.
+- **Implementation**: Dynamic segmented contiguous space
+- **Structure**: Map of nodes pointing to larger contiguous buffers
+- **Controller**: Maintains the illusion of continuity and provides interface
+- **Advantage**: No capacity concept like vector
+
+![Deque Structure](../images/C++_deque.jpg)
+
+### Stack (Adapter)
+- No iterators; doesn't support traversal
+- Uses deque or list as underlying container
+- Wrapper around the front of deque
+
+### Queue (Adapter)
+- Uses list or deque as underlying container
+
+### heap
+- Implicit representation as complete binary tree
+- Serves as the foundation for priority_queue
+
+### priority_queue (Adapter)
+- Include `<queue>`
+- Underlying implementation is max-heap
+
+### slist
+- Single linked list (unlike list which is bidirectional)
+- Insert, erase, and splice operations don't invalidate existing iterators
+
+## Associative Containers
+
+All associative containers are implemented using Red-Black trees (RB-tree).
+
+### set
+- Key values are the same as stored values
+- Elements are automatically sorted by key
+- Like list, insert/delete operations don't invalidate existing iterators
+
+### map
+- All elements are key-value pairs
+- Uses `insert_unique()` to ensure unique keys
+
+### multiset
+- Similar to set but uses `insert_equal()` to allow duplicate keys
+
+### multimap
+- Allows multiple elements with the same key
+
+## Hash-based Containers (Non-standard but widely used)
+
+These containers use hash tables with separate chaining for collision handling.
+
+### Unordered Associative Containers
+- `unordered_set`
+- `unordered_multiset`
+- `unordered_map`
+- `unordered_multimap`
+
+```cpp
+for(auto iter = umap.begin(); iter != umap.end(); iter++)
+{
+    iter->first;   // key
+    iter->second;  // value
+}
+```
+
+## Iterator Invalidation Rules
+
+### Vector-like Containers
+- **Reallocation**: All iterators invalidated when capacity is expanded
+- **Insertion/Erasure**: May shift elements, invalidating iterators
+- **Solution**: `iter = container.erase(iter);`
+
+### List-like Containers
+- **Insertion/Splicing**: Existing iterators remain valid (only current iterator invalidated)
+- **Erasure**: Returns next valid iterator
+- **Solutions**: 
+  - `iter = container.erase(iter);`
+  - `container.erase(iter++);`
+
+### Tree-like Containers
+- **Erasure**: Current iterator invalidated
+- **Solution**: `container.erase(iter++);`
+
+### General Solution
+When in doubt, reacquire iterators after modification operations.

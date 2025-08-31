@@ -1,0 +1,104 @@
+- 六大组成元素：
+    - containers : 各种数据结构，看作一种class template
+    - algorithms: function template
+    - iterators: 容器与算法之间的胶合剂，“泛型指针”,将operator*, →,++ 重载的class template
+    - functors(仿函数)：算法的policy, class template
+    - adapters(配接器):修饰容器接口的东西   stack, queue
+    - allocators(配置器): 内存管理 class template
+- 序列式容器 (sequence containers)
+    1. array : 静态数组，不能动态增长
+    2. vector：
+        - 迭代器 ：本身就是连续的线性空间，普通指针即可满足random access iterator
+        - 数据结构：线性的连续空间，两个迭代器statr, finish 分别指向配置空间的范围，end_of_storage迭代器指向整个连续空间的尾端
+            
+            ```cpp
+            iterator statr;
+            iterator finish;
+            iterator end_of_storage;
+            ```
+            
+        - 构造与内存管理: constructor,push_back
+            - push_back : 检查备用空间→ 调整finish,如果没有备用空间 扩充
+            - 动态增加大小不是在原空间上增加，而是重新配置一个新空间 然后全部移动，所以原有的迭代器会失效
+        - pop_back, erase,clear
+            - 
+            
+            ```cpp
+            void pop_back()
+            {
+            	--finish;
+            	destory(finish);
+            }
+            ```
+            
+        - **reserve和resize的区别：**
+            - resize()  影响的是容器size , reserve 是容器的capacity
+            - **reserve是直接扩充到已经确定的大小（参数），可以减少多次开辟、释放空间的问题，也可以减少多次拷贝数据的问题。reserve只是保证vector的空间大小最少达到参数的大小，只有一个参数**
+            - **Resize()可以改变有效空间的大小，也有改变默认值的功能。Capacity的大小也会随之改变，resize可以有多个参数**
+        - vector中erase和algorithm中remove方法区别
+            - vector中erase真正删除了元素，迭代器无法再访问
+            - remove只是简单地将元素移到容器的最后面，迭代器依旧可以访问。因为algorith通过迭代器进行操作，无法进行真正的删除
+        - vector迭代器失效的情况
+            - 当插入一个元素到vector中，由于引起了内存重新分配，指向原内存迭代器失效
+            - 当删除容器中一个元素后，该迭代器指向的元素已经被删除，那么迭代器失效。erase方法会返回下一个有效的迭代器，所以在删除一个元素时，需要 it=vec.erase(it);
+        - 正确释放vector的内存(clear(),swap(),shrink_to_fit())
+            - Vec.clear():清空内容，不释放内存
+            - Vector().swap(vec):清空内容且释放内存，想得到一个全新的vector
+            - Vec_shrink_to_fit()：请求容器降低其capacity和size匹配
+            - Vec_clear() ; vec_shrink_to_fit():清空内容且释放内存 （两个语句）
+    3. list: 每次插入或删除一个元素就释配一个空间，对空间的运用不浪费
+        - 底层原理为环形双向链表 : pointer prev, pointer next，只需一个指针可以完整遍历链表
+        - 适用于需要大量insert, delete的操作
+    4. deque : 双向开口的连续空间，相比于vector 没有capacity的概念
+        - 底层原理 ： 动态分段的连续空间组成，随时可以增加一段新的空间链接，deque采用map,其中的每一个node 指向另一段较大连续空间（缓冲区），缓冲区才是deque的储存主体
+        - 中控器 ：在分段的连续空间上，维护整体连续的假象且提供接口
+            
+            ![20230308_141014.jpg](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/e817c75c-57cb-4153-9259-3d342c9e6a51/20230308_141014.jpg)
+            
+        
+    5. stack(Adaptors)
+        - 没有迭代器，不提供遍历
+        - 以deque/list 为stack 的底层容器,封装deque的头端即可
+    6. queue(Adaptors)
+        - 以list/deque作为底层容器
+    7. heap : implicit representation ,作为priority_queue的底层 ,complete binary tree
+    8. priority_queue(Adaptors) ： include<queue>
+        - 底层为max-heap
+    9. slist : single linked list, list容器是双向的，因此提供一个单向链表
+        - insert, earse, splice不会造成原有的迭代器失效
+- 关联式容器(associative containers): 底层机制均为RB-tree
+    - RB-tree:
+        - set
+            - 健值就是实值，所有元素会根据健值自动排列
+            - 和list一样不会因为insert,delete,操作导致之前的迭代器失效
+        - map
+            - map的所有元素都是pair,同时拥有value and key
+            - 一定使用rb-tree的insert_unique() ,而不是insert_equal()
+        - multiset ：唯一不同是使用insert_equal
+        - multimap
+    - hashtable(非标准) ：采用separate chaining 来处理collision
+- Unordered Associative Containers(非关联式容器)
+    - unordered_set
+    - unordered_multiset
+    - unordered_map
+    - unordered_multimap
+    
+    ```cpp
+    for(auto iter = umap.begin();iter!=umap.end();iter++)
+    {
+    	iter->first;
+    	iter->second;
+    }
+    ```
+    
+- 迭代器失效
+    - 扩充容量时
+    - 数组形数据：insert and erase 会改变原有元素的位子
+        - erase(*iter)的返回值是下一个有效迭代器的值。 iter =cont.erase(iter)
+    - 链表形 list : insert and splice 不会造成原有迭代器失效，但会当前失效
+        - 解决办法两种，erase(*iter)会返回下一个有效迭代器的值，或者erase(iter++)
+    - 树状 :当前迭代器失效
+        - erase(iter++)的方式删除迭代器。
+    - 解决方法： 重新获取迭代器
+
+[STL 算法](https://www.notion.so/STL-155dd14fc791813982ccd5aaf7a40ac8?pvs=21)

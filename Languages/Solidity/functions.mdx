@@ -1,0 +1,151 @@
+---
+title: "Solidity Functions"
+description: "Function types, modifiers, and special functions in Solidity"
+---
+
+# Solidity Functions
+
+Functions in Solidity have various access levels, attributes, and special behaviors.
+
+## Function Access Levels
+
+- **private**: Only in this contract
+- **internal**: In this contract with inheritance
+- **public**: Inside and outside this contract
+- **external**: Only outside this contract
+
+## Function Attributes
+
+- **payable**: Can receive ether
+- **pure**: Read-only, can't read/write blockchain data (completely independent)
+- **view**: Read-only, can read blockchain data
+
+```solidity
+function add(uint x, uint y) external pure returns (uint) {
+    return x + y;
+}
+
+function example() internal view { }
+```
+
+## Function Modifiers
+
+Modifiers wrap functions and can take input. They don't have constructors:
+
+```solidity
+modifier whenNotPaused() {
+    require(!paused, "paused");
+    _;
+}
+
+function inc() external whenNotPaused {
+    count += 1;
+}
+
+function dec() external whenNotPaused {
+    count -= 1;
+}
+
+modifier cap(uint i) { 
+    // ..code
+}
+
+function incBy(uint x) external whenNotPaused cap(x) {
+    // code
+}
+```
+
+Modifiers can also be used to create "sandwich" code:
+
+```solidity
+modifier sandwich() {
+    count += 10;
+    _;
+    count *= 2;
+}
+```
+
+## Special Functions
+
+### Constructor
+
+Only called once when we deploy the contract:
+
+```solidity
+contract ConstructorTest {
+    address public owner;
+    uint public x;
+    
+    constructor(uint _x) {
+        owner = msg.sender;
+        x = _x;
+    }
+}
+```
+
+### Receive
+
+Executed when a contract is sent ether without any calldata, or when the calldata does not match a function signature:
+
+```solidity
+receive() external payable { }
+```
+
+A receive function has no name, takes no parameters, and returns nothing. It must be marked as external and payable.
+
+### Fallback
+
+Executed when:
+- Caller tries to call a function that doesn't exist
+- Ether is sent and receive function doesn't exist
+- Ether is sent, receive function exists, but msg.data is not empty
+
+```solidity
+fallback() external { }
+```
+
+### Self-Destruct
+
+When a contract lacks receive and fallback functions, it cannot receive Ether:
+
+```solidity
+function anyoneCanDestroy() public {
+    // receiver needs to be address payable
+    selfdestruct(receiver);
+}
+```
+
+## Function Selector
+
+All function calls are identified by function selectors in Solidity. These are the first 4 bytes of the hash of a function signature:
+
+```solidity
+function myFunction(address a, uint b, bytes c) public {...}
+
+bytes4 selector = bytes4(keccak256("myFunction(address,uint256,bytes)"));
+bytes4 selector = myFunction.selector;
+```
+
+## Function Outputs
+
+Assigned return values save more gas:
+
+```solidity
+function returnMany() public pure returns (uint, bool) {
+    return (1, true);
+}
+
+function named() public pure returns (uint x, bool b) {
+    return (1, true);
+}
+
+function assigned() public pure returns (uint x, bool b) {
+    x = 1;
+    b = true;
+}
+
+function destruct() public pure {
+    (uint x, bool b) = returnMany();
+    (, bool b) = returnMany(); // ignore first value
+}
+```

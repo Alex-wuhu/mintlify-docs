@@ -1,0 +1,155 @@
+---
+title: "Solidity Basics"
+description: "Data types, variables, and fundamental concepts in Solidity"
+---
+
+# Solidity Basics
+
+## Data Types
+
+### Value Types
+
+Value types are passed by value, meaning they are always copied when used as function arguments or assigned.
+
+```solidity
+uint = uint256  // 0 to 2**256-1
+uint8           // 0 to 2**8-1
+uint16          // 0 to 2**16-1
+int = int256    // -2**255 to 2**255-1
+int128          // -2**128 to 2**128-1
+
+int public minInt = type(int).min;
+int public maxInt = type(int).max;
+address public addr = 0x1234567890123456789012345678901234567890;
+bytes32 public b32 = 0x1234567890123456789012345678901234567890123456789012345678901234;
+```
+
+### Reference Types
+
+Reference types are passed by reference and must declare their data location: **Calldata**, **memory**, or **storage**.
+
+#### Arrays
+
+Arrays can be fixed or dynamic:
+
+```solidity
+contract ArrayExample {
+    uint[] public nums = [1,2,3];
+    uint[3] public numsFixed = [4,5,6];
+    
+    function examples() external {
+        nums.push(4);    // 1,2,3,4
+        delete nums[1];  // 1,0,3,4
+        nums.pop();
+        
+        // Create array in memory
+        uint[] memory a = new uint[](5);
+        a[1] = 123;
+    }
+}
+```
+
+#### Mappings
+
+Mappings are key-value stores that can only be used in storage:
+
+```solidity
+contract MappingExample {
+    mapping(address => uint) public balances;
+    mapping(address => mapping(address => bool)) public isFriend;
+    
+    function examples() external {
+        balances[msg.sender] = 123;
+        uint bal = balances[msg.sender];
+        uint bal2 = balances[address(1)]; // default value 0
+        delete balances[msg.sender]; // 0 in this balance
+    }
+}
+```
+
+#### Structs and Enums
+
+```solidity
+struct Car {
+    string model;
+    uint year;
+    address owner;
+}
+
+Car public car;
+Car[] public cars;
+
+function examples() external {
+    Car memory toyota = Car("Toyota", 1990, msg.sender);
+    Car memory lambo = Car({year: 1990, model: "Lamborghini", owner: msg.sender});
+    Car storage _car = cars[0];
+    _car.year = 2024;
+}
+
+enum Status {
+    None,    // 0
+    Pending, // 1
+    Shipped  // 2
+}
+```
+
+#### Strings and Bytes
+
+For strings less than 32 bytes, it's more efficient to store them in a fixed-size bytes32.
+
+### Variables
+
+#### State Variables (Storage Variables)
+
+Saved on the blockchain:
+
+```solidity
+contract Example {
+    uint a = 100; // storage slot 0x0
+    uint b = 200; // 0x1
+    bool c = true; // 0x2
+    
+    constructor() {
+        uint x;
+        assembly {
+            x := sload(0x0);
+        }
+    }
+}
+```
+
+#### Variable Types
+
+1. **State** variables: Saved on blockchain (storage)
+2. **Local** variables: Only in local functions
+3. **Global** variables: Built-in values like `msg.sender`, `block.timestamp`
+4. **Memory**: Only exist when called
+5. **Immutable**: Value can't be changed, saves gas
+
+```solidity
+contract StateVariables {
+    uint public myUint = 123; // state variable
+    
+    function foo() external {
+        uint x = 123; // local
+        address sender = msg.sender; // global
+        uint timestamp = block.timestamp;
+        uint blockNum = block.number;
+    }
+}
+```
+
+#### Default Values
+
+- bool: false
+- uint and int: 0
+- address: 0x0000000000000000000000000000000000000000
+- bytes32: 0x0000000000000000000000000000000000000000000000000000000000000000
+
+#### Constants
+
+Constants save gas:
+
+```solidity
+uint constant MY_CONSTANT = 123;
+```

@@ -1,0 +1,122 @@
+---
+title: "Solidity Contracts"
+description: "Inheritance, interfaces, and contract structure in Solidity"
+---
+
+# Solidity Contracts
+
+## Inheritance
+
+Use the `virtual` and `is` keywords for inheritance. Child contracts inherit functions (except private) and state variables.
+
+### Multiple Inheritance
+
+Sequence matters: most base contracts come first.
+
+```solidity
+contract A {
+    function foo() public pure virtual returns (string memory) {
+        return "A";
+    }
+}
+
+contract B is A {
+    function foo() public pure override returns (string memory) {
+        return "B";
+    }
+}
+
+contract C is A, B {
+    function foo() public pure override(A, B) returns (string memory) {
+        return "C";
+    }
+}
+```
+
+### Calling Parent Constructors
+
+```solidity
+// 1. Call when initializing
+contract U is S("s"), T("t") {}
+
+// 2. Pass parameters
+contract V is S, T {
+    constructor(string memory _name, string memory _text) S(_name) T(_text) {}
+}
+```
+
+### Calling Parent Functions
+
+```solidity
+contract A {
+    function foo() public pure virtual returns (string memory) {
+        return "A";
+    }
+}
+
+contract B is A {
+    function foo() public pure override returns (string memory) {
+        A.foo();     // direct call
+        super.foo(); // super keyword
+        return "B";
+    }
+}
+```
+
+## Interfaces and Abstract Contracts
+
+### Interfaces
+
+1. Must be external
+2. No variables
+
+```solidity
+interface MyInterface {
+    function myFunction(uint256 x) external returns (uint256);
+}
+```
+
+### Abstract Contracts
+
+Abstract contracts can have variables and implementations, while interfaces only have function signatures.
+
+```solidity
+abstract contract ContractA { }
+```
+
+## Events
+
+Events are used for logging:
+
+```solidity
+event Log(string message, uint val);
+event IndexedLog(address indexed sender, uint val);
+
+function example() external {
+    emit Log("foo", 1234);
+    emit IndexedLog(msg.sender, 789);
+}
+```
+
+## Libraries
+
+Libraries do not have their own state variables. The `using...for...` statement can be used to attach library functions to a specific type.
+
+```solidity
+library StudentLibrary {
+    struct Student {
+        string name;
+        uint id;
+        uint grade;
+    }
+
+    function compareGrades(Student memory s1, Student memory s2) public pure returns(Student memory) {
+        // function body
+    }
+}
+
+// Using a library
+using MathLibrary for uint256;
+uint a;
+a.add(b);
+```

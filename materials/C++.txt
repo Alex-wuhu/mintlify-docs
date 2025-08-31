@@ -1,0 +1,473 @@
+### keyword
+
+- volatile : declaring objects in **shared memory** that can be accessed by multiple processes…
+    - the compiler **reloads the value from memory** each time it is accessed by the program
+- const : specifies that the object or variable isn't modifiable.
+- constexpr（c++11）：it is possible to evaluate the value of the function or variable at compile time.
+- extern ：external linkage
+- static : internal linkage
+- auto : before it declares a variable in automatic storage class local lifetime. now it declares a variable whose type is deduced from initialization expression
+- **register: 寄存器变量，请求编译器将这个变量保存在CPU的寄存器中，从而加快程序的运行,no longer supported**
+- **thread_local** specifier is accessible only on the thread on which it's created.
+    
+    ```cpp
+    struct S // cannot be applied to type definition
+    {
+        thread_local int i; // Illegal. The member must be static.
+        thread_local static char buf[10]; // OK
+    };
+    ```
+    
+- **__fastcall** :calling convention specifies that arguments to functions are to be passed in registers, only applies to the x86 architecture
+    
+    ```cpp
+    struct CMyClass {
+       void __fastcall mymethod();
+    };
+    # equivalent
+    void CMyClass::mymethod() { return; }
+    void __fastcall CMyClass::mymethod() { return; }
+    ```
+    
+- a++ and ++a
+
+```python
+a = 1
+b = a++  //b=1
+c = ++a //c = 2 
+```
+
+- 多态继承和封装
+    - 封装 ： 将数据和操作集中起来
+        - 便于管理和访问控制
+        - class用于实现封装，访问权限有public… , namespace
+    - 继承：一、能够减少重复的代码；二、继承增加了类的耦合性；三、继承是多态的前提。
+    - 多态
+
+### 内存分配：堆，栈，data segment, code segment
+
+- 堆与栈：
+    - 管理方式：栈由编译器分配管理，堆由程序员通过new手动分配
+    - 碎片问题：栈后进先出，由系统分配无碎片问题，堆手动分配很可能碎片化
+    - 增长方向：栈向着地址减小的方向进行，堆地址增大的方向
+    - 栈有动态和静态分配，静态由alloc函数执行，动态由编译器分配，堆动态分配
+    - 效率：栈效率高于堆，系统操作底层效率高
+    - 大块内存 堆分配 更好，注意堆栈的越界问题
+        
+        ![1.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/5c7d8db5-6b0d-49e8-ac23-93fda52251c2/1.png)
+        
+- new/delete and malloc/free：
+    - malloc是一个function返回void *，new是一个operator 返回指针
+    - malloc的参数是字节大小，new的参数是初始化值
+    - new可以用于class的分配，malloc不行（主要是初始化问题）
+    - new可以被重载(用于class)，malloc不行
+    - malloc报错返回0，new报错返回exception
+- leak
+    - 原因：heap leak
+        - 类的析构没有调用new and delete
+        - delete没有使用[]
+    - 解决
+        - smart pointer
+        - no null pointer
+        - use string → string memory management internally, and it’s fast and well-optimized.
+        - RAII  : allocates memory in object constructor and releases it in the destructor
+
+### Cast
+
+1. 类型
+    1. static_cast<T>(val) :仅当type和expression可以互相隐式转换时有用
+        - Type checking at compile time
+        - Safe for upcast (derived -> base)
+        - Unsafe for downcast (base -> derived)
+        - 常用于**数值转换**( float->int)
+    2. dynamic_cast<T*>(ptr) :**转换类(向下转换)，只适用于指针或引用**
+        - Type checking at run time
+        - 用于多态类型转换
+        - Safe for downcast
+            - If base class pointer is not pointing to a specified derived class object, dynamic_cast of base to derived pointer **returns null pointer (0).**
+        - dynamic_cast can only downcast polymorphic types(base class should have at least one virtual function)
+    3. const_cast<T*>(ptr) ::执行只有一种用于的类型转换，删除const,volatile特性，只能用于指针或引用
+        - Const_cast<type-name>(expression)
+        Const int pop=100;
+        
+    4. reinterpret_cast<T*>(ptr)
+        - 用于位的简单重新解释
+        - 允许将任何指针转换为任何其他指针类型（如 char* 到 int* 或 One_class* 到 Unrelated_class* 之类的转换，但其本身并不安全）
+        - 也允许将任何整数类型转换为任何指针类型以及反向转换。
+        - reinterpret_cast
+        的一个实际用途是在哈希函数中，即，通过让两个不同的值几乎不以相同的索引结尾的方式将值映射到索引
+- 不同C的强制转换：转化不够明确，不能进行错误检查，容易出错
+
+### RTTI(Run time type information)
+
+- allows the **type of an object to be determined** during program execution
+- dynamic_cast : conversion of polymorphic types
+- typeid operator : identifying the exact type of an object.
+    - arguments : type-id or expression
+    - result : const type_info&
+    - only for reference , pointer
+    - 
+    
+    ```cpp
+    #include <iostream>
+    #include <typeinfo>
+    
+    class Base {
+    public:
+       virtual void vvfunc() {}
+    };
+    
+    class Derived : public Base {};
+    
+    using namespace std;
+    int main() {
+       Derived* pd = new Derived;
+       Base* pb = pd;
+       cout << typeid( pb ).name() << endl;   //prints "class Base *"
+       cout << typeid( *pb ).name() << endl;   //prints "class Derived"
+       cout << typeid( pd ).name() << endl;   //prints "class Derived *"
+       cout << typeid( *pd ).name() << endl;   //prints "class Derived"
+       delete pd;
+    }
+    int main()
+    {
+       typeid(int) == typeid(int&); // evaluates to true
+    }
+    ```
+    
+- type_info class :hold the type information returned by the **`typeid`**
+ operator.
+    - generate by complier
+
+### Operator
+
+- ::     .  *  ?:  can not be overloaded
+- ?: ternary operator, This can be used in place of if else conditions. This is one of the operator that can't be overloaded.
+- precedence
+    - 
+    1. () [] -> . :: ++ --  后置
+    2. ! ++ -- 前置 + - *(接引) & sizeof
+    3. / & *
+    4. << >>
+    5. <= <
+    6. &   ^   |
+    7. && ||   ?:
+    8. ==  +=
+
+### Overload and override
+
+| Overload(重载) | override(重写) |
+| --- | --- |
+| Function overloading can be used in normal functions as well as in classes(constructor overloading is a classic example) | Function overriding applies exclusively to an **inherited class** (or in other words a subclass). |
+| compile time. | run time. |
+| the same scope. | are in different scopes. |
+| different function signatures. | have the same function signatures. |
+- 
+- memset, memcpy :可以直接进行初始化和拷贝的有结构，枚举，指针 **not 类**
+
+### Sizeof
+
+- **struct**  ：
+    
+    ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/6ba46c86-de30-49fe-97da-95ebc2264220/Untitled.png)
+    
+- **class**
+    - 空类： sizeof(class) =1 ,类的每个实例在内存中都有独一的地址，编译器会为之添加一个字节
+    - 带有虚函数：多一个指向虚函数地址的指针
+    - static/ const ：不影响class的大小，静态成员单独放在一个地方
+    - 继承：继承的大小就是基类加上继承类的和
+- INT
+    - depends on compiler. If it is 16 bits compiler like Turbo C++, the size is 2 bytes while if it is 32 bit compiler like Dev-C++, g++ or Visual Studion, the size is 4 bytes.
+- void =0
+- build-in data
+    
+    
+    | Type | Size |
+    | --- | --- |
+    | bool, char, char8_t, unsigned char, signed char, __int8 | 1 byte |
+    | char16_t, __int16, short, unsigned short, wchar_t, __wchar_t | 2 bytes |
+    | char32_t, float, __int32, int, unsigned int, **long**, unsigned long | 4 bytes |
+    | double, __int64, long double, long long, unsigned long long | 8 bytes |
+
+### Exceptions
+
+- where caught : RUN time
+- 流程
+    
+    ```cpp
+    
+    double division(int a, int b)
+    {
+       if( b == 0 )
+       {
+          throw "Division by zero condition!";
+       }
+       return (a/b);
+    }
+     
+    int main ()
+    {
+       int x = 50;
+       int y = 0;
+       double z = 0;
+     
+       try {
+         z = division(x, y);
+         cout << z << endl;
+       }catch (const char* msg) {
+         cerr << msg << endl;
+       }
+     
+       return 0;
+    }
+    ```
+    
+- unwinding stack
+    - 函数由于出现异常而终止，则程序将释放栈中的内存，但不会在释放栈的第一个返回地址后停止，而是继续释放栈，直到找到第一个try块的返回地址，随后将控制权交给异常处理程序，这个过程称为栈解退，对于栈中的对象也会自动调用析构函数
+- 
+- exception class
+    
+    ![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/25af87ca-1e27-4994-b55e-d10c1a0bce78/Untitled.png)
+    
+    - derived class: most-derived type should be caught first, most-based type should be caught last
+- Uncaught exception : no matching , terminated()is called
+
+### Initialization
+
+- Zero Initialization
+    - when
+        - program startup, all static variables
+        - value initialization, for scalar types(int,float) and POD are initialized by empty braces
+        - arrays have only a subset of their member initiailzed
+        - 
+        
+        ```cpp
+        struct my_struct{
+            int i;
+            char c;
+        };
+        
+        int i0;              // zero-initialized to 0
+        int main() {
+            static float f1;  // zero-initialized to 0.000000000
+            double d{};     // zero-initialized to 0.00000000000000000
+            int* ptr{};     // initialized to nullptr
+            char s_array[3]{'a', 'b'};  // the third char is initialized to '\0'
+            int int_array[5] = { 8, 9, 10 };  // the fourth and fifth ints are initialized to 0
+            my_struct a_struct{};   // i = 0, c = '\0'
+        }
+        ```
+        
+- Default initialization
+    - new keyword, scalar variables, arrays
+        
+        ```cpp
+        MyClass mc1;
+        MyClass* mc3 = new MyClass;
+        int i1;
+        float f;
+        char c;
+        int int_arr[3];
+        ```
+        
+    - **Constant variables** must be declared together with an initializer
+        - scalar → error
+        - class → default constructor and warning
+
+### Preprocessor
+
+- include
+- conditinally
+    - #if, #ifdef, #ifndef, #else, #elif, #elifdef, #elifndef (since C++23), and #endif
+    
+    ```cpp
+    #ifdef NULL
+       #define NULL 0
+    #endif
+    ```
+    
+- relpace
+    - #and ##
+    
+    ```cpp
+    #define MKSTR( x ) #x
+     
+    int main ()
+    {
+        cout << MKSTR(HELLO C++) << endl;
+     
+        return 0;
+    }
+    //HELLO C++
+    #define concat(a, b) a ## b
+    int main()
+    {
+       int xy = 100;
+       
+       cout << concat(x, y);
+       return 0;
+    }
+    //100
+    ```
+    
+- Error or waring
+    - #error,#warning
+- implementation-defined
+- file name and line info
+    - #line
+- pre defined macros
+    - macro is a fragment of code that is given a name like #definde C 1
+    
+    | __LINE__ | 这会在程序编译时包含当前行号。 | value |
+    | --- | --- | --- |
+    | __FILE__ | 这会在程序编译时包含当前文件名。 | 
+    Value of __FILE__ : test.cpp |
+    | __DATE__ | 这会包含一个形式为 month/day/year 的字符串，它表示把源文件转换为目标代码的日期。 | 
+    Value of __DATE__ : Feb 28 201 |
+    | __TIME__ | 这会包含一个形式为 hour:minute:second 的字符串，它表示程序被编译的时间。 | 
+    Value of __TIME__ : 18:52:4 |
+    
+
+### Smart pointer
+
+1. 原理：指针本身为一个类，当超出了类的作用域，类会自动调用析构函数, take a class with a pointer, **destructor,** and **overloaded operators** like ***** and **->**. Since the destructor is automatically called when an object goes out of scope, the dynamically allocated memory would automatically be deleted 
+2. type
+    - unique : stores one pointer only. We can assign a different object by removing the current object from the pointer.
+        - move() 函数**显式地声明所有权转移。**
+    - shared_ptr : more than one pointer can point to this one object at a time and it’ll maintain a **Reference Counter** using the ***use_count()* method.**
+    - weak_ptr : holds a non-owning reference to an object. It’s much more similar to shared_ptr except it’ll not maintain a **Reference Counter**. In this case, a pointer will not have a stronghold on the object. The reason is if suppose pointers are holding the object and requesting for other objects then they may form a **Deadlock.**
+3. auto_ptr 与 unique_ptr 比较（aoto已经被11弃用）
+    1. auto_ptr 可以赋值拷贝，复制拷贝后所有权转移；unqiue_ptr 无拷贝赋值语义，但实现了move （转换使用权）；
+    2. auto_ptr 对象不能管理数组（析构调用 delete），unique_ptr 可以管理数组（析构调用 delete[] ）；
+    3. auto 不要保存指向静态分配对象，不要指向同一对象，不要保存动态分配指针
+4. 工厂函数(C++14)：比手写类型效率更高
+    
+    Auto ptr=make_unique<int>(42);
+    
+    Auto ptr=make_unique<string>("god of war")
+    
+5. 重点：
+    1. 智能指针没有定义加减法运算（避免越界）
+    2. 一定能确保没有内存泄漏吗
+    3. 怎么自动销毁
+- How to transfer ownership of unique_ptrs
+    - ptr2 = std::move(ptr1)
+
+### RAII(resource acquisition is initialization)
+
+- The principle that *objects own resources* is also known as RAII
+- C++ doesn't have automatic *garbage collection*, an internal process that releases heap memory and other resources as a program runs. A C++ program is responsible for returning all acquired resources to the operating system.
+
+### attributes
+
+---
+
+1. 定义：编译阶段，给变量、函数、类等帖上一个编译阶段的标签，方便编译器识别处理，GCCl里是“__attribute__”, VC里是"__declspec"
+2. 关键字：[[…]]
+    
+    [[noreturn]]     //属性标签
+    
+    Int func ..      //函数不会返回值
+    
+    - 
+    
+
+### auto and decltype
+
+```cpp
+auto i =0 ;
+auto iter = m.begin();
+int x =0;
+decltype(x)   x1 ; //自动推断为x int 类
+decltype(x)*   x2; //
+```
+
+简要原理：编译器遍历一个核对表
+
+特点和差异 :
+
+1. auto总是推断值的类型，而不是引用 可以加上const volatile *修饰
+2. decltype可以推断引用类型，引用必须赋值
+3. auto无法在类内部使用
+4. decltyoe可以在类内部使用
+
+### Assert
+
+- Assert(express) : if false call abort()终止程序
+- 动态断言 : assert虽然是一个宏，但在预处理阶段不生效，而是在运行阶段运行
+- static assert(静态): 编译时生效，运行阶段看不见：比如用于检查long的大小，主要经常配合"type_traits"使用
+
+![Untitled](https://prod-files-secure.s3.us-west-2.amazonaws.com/de9433f4-e799-4b92-a0ce-620e2fad630d/90e7edfe-2128-4b36-b32e-239366d3b315/Untitled.png)
+
+### Template
+
+- 使用泛型来定义函数
+    
+    ```cpp
+    Template <typename AnyType>               C11//  C98也可以用 template <class Anytype>
+    Void swap(AnyType &a, AnyType &b)
+    			{ 
+    				AnyType temp;
+    				Temp=a;
+    				A=b;
+    				B=temp
+    			}
+    ```
+    
+- 函数模板**并不能缩短可执行程序**，最终仍然由不同独立的函数定义
+- 局限性
+    - 使用模板时，编译器会预定义部分操作，如+，-，所以某些类型可能无法处理
+    - 解决方法： 1）重载运算符 2）具体化模板
+- 模板具体化：
+    - 优先级： 非模板函数> 具体化模板函数> 常规模板函数
+    
+    ```cpp
+    Template<>void<int> Swap(int,int)
+    Template<class T>
+    T add(T a, T b)
+    	return a+b;
+    int m =6;
+    double x = 3.5;
+    cout << add<double>(x,m)
+    无法处理地址交换，int& 无法指向double
+    ```
+    
+- 类template
+    
+    ```cpp
+    Template<class/typename Type>
+    class Stack
+    {
+    	Type *item;
+    }
+    ```
+    
+    - 使用类模板必须显示声明类型 Stack<int> s
+
+### Lambda(C14)
+
+- expression : [[capture](notion://www.notion.so/parameters)](parameters)→>return-type {body}
+    
+    ```cpp
+    auto f3 = [](int x)        
+    		    {
+    		        return x*x;
+        };// lambda f3
+    
+    ```
+    
+
+### C14
+
+- **auto** for return type of functions
+- Support digit separators like 1’000’000
+
+[STL](https://www.notion.so/STL-155dd14fc79181c9be5cda9b38c3af6e?pvs=21)
+
+[Random and format](https://www.notion.so/Random-and-format-155dd14fc791811cab47c592636ffa72?pvs=21)
+
+[Class](https://www.notion.so/Class-155dd14fc79181c499ccdf83d813448d?pvs=21)
+
+[problems ](https://www.notion.so/problems-155dd14fc7918123b139fddf84157fff?pvs=21)
+
+[Stream](https://www.notion.so/Stream-155dd14fc79181e399bff10fd0372da8?pvs=21)
